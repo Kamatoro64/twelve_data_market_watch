@@ -15,37 +15,74 @@
 
 
 const fetch = require("node-fetch");
+const prompt = require('prompt');
 require('dotenv').config()
 
-// In this example we'll look at 2 ticker symbols but it can be extended in the future
-let tickers = ['AAPL', 'TSLA']
 
-// Requires a free API Key to use
-const customUrl = new URL("https://api.twelvedata.com/time_series");
+prompt.start();
+prompt.message = ""
 
-customUrl.searchParams.append("symbol", tickers.join(','));
-customUrl.searchParams.append("interval", "1day");
-customUrl.searchParams.append("apikey", process.env.API_KEY);
-customUrl.searchParams.append("outputsize", 30); // 1 to 5000, Default is 30
+prompt.get([{
+	name: 'tickers',
+	description: 'List of space separated tickers',
+	type: 'string',
+	required: true
+}], (err, result) => {
+	if (err) { return onErr(err); }
 
-//console.log(customUrl.href);
+	let tickers = result.tickers.split(' ');
+
+	// Requires a free API Key to use
+	const customUrl = new URL("https://api.twelvedata.com/time_series");
+
+	// Add tickers to query
+	customUrl.searchParams.append("symbol", tickers.join(','));
+
+	// Set interval
+	customUrl.searchParams.append("interval", "1day");
+
+	// Set result count: 1 to 5000, Default is 30
+	customUrl.searchParams.append("outputsize", 30);
+
+	// Add API Key
+	customUrl.searchParams.append("apikey", process.env.API_KEY);
+
+	// Retrieve stock data
+	getStockData(customUrl).catch(error => {
+		console.error(error)
+	})
+});
+
+function onErr(err) {
+	console.log(err);
+	return 1;
+}
+
 
 async function getStockData(url) { // By definition an asynchronous function returns a promise
+
+	// DEBUG - Display URL passed to fetch
+	//console.log(customUrl.href);
+
+	// An await splits execution flow, allowing the caller of the async function to resume execution. After the await defers the continuation of the async function, execution of subsequent statements ensues. If this await is the last expression executed by its function execution continues by returning to the function's caller a pending Promise for completion of the await's function and resuming execution of that caller.
+
 	const response = await fetch(url); // await required because fetch is an asynchronous function
 
+	// Executes after await
 	const result = await response.json()
 
 	// Side effect but for illustration purpose
-	for (const ticker in result) {
-		console.log(`${result[ticker].meta.symbol}: ${JSON.stringify(result[ticker].values[0])}`)
+	if (result.hasOwnProperty('meta')) {
+		console.log(`${result.meta.symbol}: ${JSON.stringify(result.values[0])}`)
+	} else {
+		for (const ticker in result) {
+			console.log(`${result[ticker].meta.symbol}: ${JSON.stringify(result[ticker].values[0])}`)
+		}
 	}
 
 }
 
-// An await splits execution flow, allowing the caller of the async function to resume execution. After the await defers the continuation of the async function, execution of subsequent statements ensues. If this await is the last expression executed by its function execution continues by returning to the function's caller a pending Promise for completion of the await's function and resuming execution of that caller.
-getStockData(customUrl).catch(error => {
-	console.error(error)
-})
+
 
 
 
