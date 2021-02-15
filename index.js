@@ -13,6 +13,7 @@
 	3) Complete data stream
 */
 
+
 const fetch = require("node-fetch");
 require('dotenv').config()
 
@@ -25,10 +26,30 @@ const customUrl = new URL("https://api.twelvedata.com/time_series");
 customUrl.searchParams.append("symbol", tickers.join(','));
 customUrl.searchParams.append("interval", "1day");
 customUrl.searchParams.append("apikey", process.env.API_KEY);
+customUrl.searchParams.append("outputsize", 30); // 1 to 5000, Default is 30
 
 //console.log(customUrl.href);
 
+async function getStockData(url) { // By definition an asynchronous function returns a promise
+	const response = await fetch(url); // await required because fetch is an asynchronous function
 
+	const result = await response.json()
+
+	// Side effect but for illustration purpose
+	for (const ticker in result) {
+		console.log(`${result[ticker].meta.symbol}: ${JSON.stringify(result[ticker].values[0])}`)
+	}
+
+}
+
+// An await splits execution flow, allowing the caller of the async function to resume execution. After the await defers the continuation of the async function, execution of subsequent statements ensues. If this await is the last expression executed by its function execution continues by returning to the function's caller a pending Promise for completion of the await's function and resuming execution of that caller.
+getStockData(customUrl).catch(error => {
+	console.error(error)
+})
+
+
+
+/* Re-implemented with async await in getStockData
 fetch(customUrl)
 	.then(res => {
 		// The result of res.json, which is a Promise
@@ -43,4 +64,4 @@ fetch(customUrl)
 		console.log('Error!')
 		console.error(error)
 	})
-
+*/
