@@ -1,0 +1,15 @@
+{
+  "name": "twelve_data_market_watch",
+  "version": "1.0.0",
+  "description": "Making use of the twelve data API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kamatoro64",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "node-fetch": "^2.6.1"
+  }
+}
