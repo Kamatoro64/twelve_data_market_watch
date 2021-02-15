@@ -29,13 +29,18 @@ customUrl.searchParams.append("apikey", process.env.API_KEY);
 //console.log(customUrl.href);
 
 
-fetch(customUrl).then(res => {
-	// Takes a Response stream and reads it to completion. It returns a promise that resolves with the result of parsing the body text as JSON, which is a JavaScript value of datatype object, string, etc.
-	res.json().then(res => { // JavaScript Object, key value pair = ticker: {Object}
+fetch(customUrl)
+	.then(res => {
+		// The result of res.json, which is a Promise
+		return res.json()
+	})
+	.then(res => {
 		for (const ticker in res) {
 			console.log(`${res[ticker].meta.symbol}: ${JSON.stringify(res[ticker].values[0])}`)
 		}
-		//console.log(res.AAPL)
-		//console.log(`${res.meta.symbol} : ${res.values.slice(-1)[0].close}`)
 	})
-})
+	.catch(error => {
+		console.log('Error!')
+		console.error(error)
+	})
+
