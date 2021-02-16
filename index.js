@@ -13,12 +13,11 @@
 	3) Complete data stream
 */
 
-
 const fetch = require("node-fetch");
 const prompt = require('prompt');
 require('dotenv').config()
 
-
+// Program flow -> Prompt user for a list of space separated ticker symbols
 prompt.start();
 prompt.message = ""
 
@@ -27,30 +26,25 @@ prompt.get([{
 	description: 'List of space separated tickers',
 	type: 'string',
 	required: true
-}], (err, result) => {
+}], async (err, input) => {
 	if (err) { return onErr(err); }
 
-	let tickers = result.tickers.split(' ');
+	const url = constructUrl(input.tickers.split(' '))
 
-	// Requires a free API Key to use
-	const customUrl = new URL("https://api.twelvedata.com/time_series");
-
-	// Add tickers to query
-	customUrl.searchParams.append("symbol", tickers.join(','));
-
-	// Set interval
-	customUrl.searchParams.append("interval", "1day");
-
-	// Set result count: 1 to 5000, Default is 30
-	customUrl.searchParams.append("outputsize", 30);
-
-	// Add API Key
-	customUrl.searchParams.append("apikey", process.env.API_KEY);
-
-	// Retrieve stock data
-	getStockData(customUrl).catch(error => {
+	// Retrieve stock data. getStockData is an asynchronous function we created so we make the prompt's callback function into an async func
+	// to use the await keyword here to resolve the promise
+	const result = await getStockData(url).catch(error => {
 		console.error(error)
 	})
+
+	// Process results (currently just displays the latest data in the values array)
+	if (result.hasOwnProperty('meta')) {
+		console.log(`${result.meta.symbol}: ${JSON.stringify(result.values[0])}`)
+	} else {
+		for (const ticker in result) {
+			console.log(`${result[ticker].meta.symbol}: ${JSON.stringify(result[ticker].values[0])}`)
+		}
+	}
 });
 
 function onErr(err) {
@@ -58,6 +52,25 @@ function onErr(err) {
 	return 1;
 }
 
+// Prompt user for a list of tickers, build URL, get stock data, display!
+function constructUrl(tickers, interval = '1min', outputSize = 30, apiKey = process.env.API_KEY) {
+
+	const url = new URL("https://api.twelvedata.com/time_series");
+
+	// Add tickers to query
+	url.searchParams.append("symbol", tickers.join(','));
+
+	// Set interval
+	url.searchParams.append("interval", interval);
+
+	// Set result count: 1 to 5000, Default is 30
+	url.searchParams.append("outputsize", outputSize);
+
+	// Add API Key
+	url.searchParams.append("apikey", apiKey);
+
+	return url
+}
 
 async function getStockData(url) { // By definition an asynchronous function returns a promise
 
@@ -70,15 +83,8 @@ async function getStockData(url) { // By definition an asynchronous function ret
 
 	// Executes after await
 	const result = await response.json()
+	return result
 
-	// Side effect but for illustration purpose
-	if (result.hasOwnProperty('meta')) {
-		console.log(`${result.meta.symbol}: ${JSON.stringify(result.values[0])}`)
-	} else {
-		for (const ticker in result) {
-			console.log(`${result[ticker].meta.symbol}: ${JSON.stringify(result[ticker].values[0])}`)
-		}
-	}
 
 }
 
